@@ -21,7 +21,7 @@ def apply_gravity():
     """
     # TODO : Mettez à jour la vitesse verticale puis la position verticale
     # du Doodle à partir de GRAVITY.
-
+    
     return
 
 # ===========================================================
@@ -37,16 +37,27 @@ def move_doodle():
 
     # TODO : Gérez les déplacements gauche/droite et mettez à jour
     # simultanément la direction et l'image du Doodle.
+    if keys == pygame.K_a :                     #Cas de gauche
+        doodle_dict["x"] -= DOODLE_SPEED
+        doodle_dict["direction"] = "left"
+        doodle_dict["image"] = doodle_left_img
+    elif keys == pygame.K_d :                   #Cas de droite
+        doodle_dict["x"] += DOODLE_SPEED
+        doodle_dict["direction"] = "right"
+        doodle_dict["image"] = doodle_left_img
 
 
-
+    
     # TODO : Implémentez le Screen Wrap pour qu'une partie du Doodle puisse
     # sortir d'un côté avant de réapparaître de l'autre.
     # N'utilisez pas de dimensions numériques écrites directement.
 
+    if doodle_dict["x"] >= SCREEN_WIDTH + DOODLE_WIDTH : 
+        doodle_dict["x"] = -SCREEN_WIDTH
+    elif doodle_dict["x"] <= -SCREEN_WIDTH - DOODLE_WIDTH : 
+        doodle_dict["x"] = SCREEN_WIDTH
 
-
-    return
+    return None
 
 # ===========================================================
 
