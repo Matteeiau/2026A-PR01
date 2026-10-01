@@ -79,16 +79,19 @@ def choose_platform_type(green_probability, blue_probability, spring_probability
     # Attention : les seuils utilisés avec random.random() doivent être
     # cumulatifs.
     
-    brown_probability = 1 - green_probability - blue_probability - spring_probability
     ran = random.random()
     
-    if green_probability - ran > 0 : res = "green"
-    elif (green_probability + blue_probability) - ran > 0 : res = "bleu"
-    elif (green_probability + blue_probability + spring_probability) - ran > 0 : res = "spring"
-    else : res = "brown"
+    if green_probability - ran > 0 : 
+        res = "green"
+    elif (green_probability + blue_probability) - ran > 0 :
+        res = "blue"
+    elif (green_probability + blue_probability + spring_probability) - ran > 0 : 
+        res = "spring"
+    else:
+        res = "brown"
 
 
-    return res # Valeur temporaire à remplacer
+    return res 
 
 # ===========================================================
 

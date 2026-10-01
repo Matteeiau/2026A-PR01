@@ -4,7 +4,7 @@ import os
 import pygame
 import random
 from config import (
-    ASSETS_DIR, SCREEN_WIDTH, SCREEN_HEIGHT, PLATFORMS,
+    ASSETS_DIR, PLATFORM_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, PLATFORMS,
     PLATFORM_WIDTH, MIN_PLATFORM_GAP, MAX_PLATFORM_GAP,
     doodle_dict, DOODLE_START_X, DOODLE_START_Y, DOODLE_WIDTH
 )
@@ -46,9 +46,14 @@ def generate_initial_platforms():
     # ajouter la plateforme à PLATFORMS et calculer la hauteur de la suivante.
     # Les probabilités à utiliser sont données dans le README.
     
+    while current_y > - SCREEN_HEIGHT : 
+        type_plat = choose_platform_type(0.65, 0.17, 0.10)
+        n_plat = create_platform(random.randint(0, SCREEN_WIDTH - PLATFORM_SIZE[0]), current_y, type_plat)
+        current_y -= random.randint(MIN_PLATFORM_GAP, MAX_PLATFORM_GAP)
+        PLATFORMS.append(n_plat)
 
 
-    return
+    return None
     # ===========================================================
 
 

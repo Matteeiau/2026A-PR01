@@ -4,7 +4,7 @@ import pygame
 import random
 from config import (
     SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, JUMP_VELOCITY, SPRING_JUMP_VELOCITY,
-    DOODLE_SPEED, DOODLE_WIDTH, DOODLE_HEIGHT, PLATFORM_WIDTH,
+    DOODLE_SPEED, DOODLE_WIDTH, DOODLE_HEIGHT, PLATFORM_WIDTH, PLATFORM_SIZE,
     MIN_PLATFORM_GAP, MAX_PLATFORM_GAP, CAMERA_SCROLL_THRESHOLD,
     PLATFORMS, doodle_dict, DOODLE_START_X, DOODLE_START_Y, LIVES
 )
@@ -21,8 +21,9 @@ def apply_gravity():
     """
     # TODO : Mettez à jour la vitesse verticale puis la position verticale
     # du Doodle à partir de GRAVITY.
-    
-    return
+    doodle_dict["vel_y"] += GRAVITY
+    doodle_dict["y"] += doodle_dict["vel_y"]
+    return None
 
 # ===========================================================
 
@@ -37,24 +38,24 @@ def move_doodle():
 
     # TODO : Gérez les déplacements gauche/droite et mettez à jour
     # simultanément la direction et l'image du Doodle.
-    if keys == pygame.K_a :                     #Cas de gauche
+    if keys[pygame.K_a] or keys[pygame.K_LEFT] :                     #Cas de gauche
         doodle_dict["x"] -= DOODLE_SPEED
         doodle_dict["direction"] = "left"
         doodle_dict["image"] = doodle_left_img
-    elif keys == pygame.K_d :                   #Cas de droite
+    elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:                   #Cas de droite
         doodle_dict["x"] += DOODLE_SPEED
         doodle_dict["direction"] = "right"
-        doodle_dict["image"] = doodle_left_img
+        doodle_dict["image"] = doodle_right_img
 
 
-    
+
     # TODO : Implémentez le Screen Wrap pour qu'une partie du Doodle puisse
     # sortir d'un côté avant de réapparaître de l'autre.
     # N'utilisez pas de dimensions numériques écrites directement.
 
-    if doodle_dict["x"] >= SCREEN_WIDTH + DOODLE_WIDTH : 
-        doodle_dict["x"] = -SCREEN_WIDTH
-    elif doodle_dict["x"] <= -SCREEN_WIDTH - DOODLE_WIDTH : 
+    if doodle_dict["x"] >= SCREEN_WIDTH :
+        doodle_dict["x"] = -DOODLE_WIDTH
+    elif doodle_dict["x"] <= -DOODLE_WIDTH :
         doodle_dict["x"] = SCREEN_WIDTH
 
     return None
@@ -71,8 +72,16 @@ def move_platforms():
     # TODO : Parcourez les plateformes et gérez le déplacement des plateformes
     # bleues encore actives. Elles doivent rester dans la fenêtre en inversant
     # leur vitesse lorsqu'elles atteignent un bord.
+    for plat in PLATFORMS :
+        if plat["type"] == "blue" and plat["active"] :
+            if plat["vx"] > 0 and plat["x"] + plat["width"] >= SCREEN_WIDTH :
+                plat["vx"] = - plat["vx"]
+            elif plat["vx"] < 0 and plat["x"] <= 0 :
+                plat["vx"] = - plat["vx"]
+            plat["x"] += plat["vx"]
+            
 
-    return
+    return None
 
 # ===========================================================
 
@@ -98,7 +107,32 @@ def check_platform_collisions():
     # - brown : JUMP_VELOCITY puis désactivation de la plateforme ;
     # - green/blue : JUMP_VELOCITY.
 
-    return
+    collision = False
+    plat_touche = None
+    idx = -1
+    TOLERANCE = 14
+    rd = (doodle_dict["x"], doodle_dict["y"], DOODLE_WIDTH, DOODLE_HEIGHT)
+    pieds_actuels = doodle_dict["y"] + DOODLE_HEIGHT
+    pieds_precedents = pieds_actuels - doodle_dict["vel_y"]
+    for plat in PLATFORMS :
+        idx += 1
+        rp = (plat["x"], plat["y"], plat["width"], plat["height"])
+        if (plat["active"] and doodle_dict["vel_y"] > 0 and rects_collide(rd, rp)
+                and pieds_precedents <= plat["y"] + TOLERANCE) :
+            collision = True
+            plat_touche = plat
+            break
+    if collision : 
+        if plat_touche["type"] == "spring" : 
+            doodle_dict["vel_y"] = SPRING_JUMP_VELOCITY
+        else :
+            doodle_dict["vel_y"] = JUMP_VELOCITY
+            if plat_touche["type"] == "brown" : 
+                PLATFORMS[idx]["active"] = False
+
+
+
+    return None
 
 # ===========================================================
 
@@ -116,8 +150,23 @@ def scroll_camera():
     # Le score doit représenter la distance verticale ainsi parcourue et le
     # meilleur score doit être mis à jour. Les plateformes sorties sous
     # l'écran doivent être retirées, puis de nouvelles plateformes générées.
+    if doodle_dict["y"] < CAMERA_SCROLL_THRESHOLD :
+        scroll_distance = CAMERA_SCROLL_THRESHOLD - doodle_dict["y"]
 
-    return
+        doodle_dict["y"] = CAMERA_SCROLL_THRESHOLD
+
+        for plat in PLATFORMS :
+            plat["y"] += scroll_distance
+
+        doodle_dict["score"] += scroll_distance
+        if doodle_dict["score"] > doodle_dict["high_score"] :
+            doodle_dict["high_score"] = doodle_dict["score"]
+
+        PLATFORMS[:] = [plat for plat in PLATFORMS if plat["y"] < SCREEN_HEIGHT]
+
+        generate_new_platforms()
+
+    return None
 
 # ===========================================================
 
@@ -134,8 +183,20 @@ def generate_new_platforms():
     # Vous devrez partir de la plateforme actuellement la plus haute et
     # continuer à ajouter des plateformes tant que nécessaire. Utilisez
     # choose_platform_type(...) avec les probabilités indiquées dans le README.
+    if not PLATFORMS :
+        current_y = SCREEN_HEIGHT
+    else :
+        highest_y = min(plat["y"] for plat in PLATFORMS)
+        current_y = highest_y - random.randint(MIN_PLATFORM_GAP, MAX_PLATFORM_GAP)
 
-    return
+    while current_y > - SCREEN_HEIGHT :
+        type_plat = choose_platform_type(0.55, 0.20, 0.13)
+        n_plat = create_platform(random.randint(0, SCREEN_WIDTH - PLATFORM_SIZE[0]), current_y, type_plat)
+        PLATFORMS.append(n_plat)
+        current_y -= random.randint(MIN_PLATFORM_GAP, MAX_PLATFORM_GAP)
+
+
+    return None
 
 # ===========================================================
 

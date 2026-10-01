@@ -36,7 +36,7 @@ SPRING_JUMP_VELOCITY = -21.0
 DOODLE_SPEED = 8
 
 # Vies et Seuil de défilement (Camera Scroll)
-LIVES = 1
+LIVES = 3
 CAMERA_SCROLL_THRESHOLD = 350
 
 # Images par seconde
